@@ -565,7 +565,9 @@ module GraphQL
     end
 
     def subtype?(parent_type, child_type)
-      @subtypes[parent_type][child_type]
+      rebuild_artifacts unless defined?(@subtypes)
+      subtypes = @subtypes[parent_type]
+      subtypes[child_type]
     end
 
     protected
@@ -601,10 +603,11 @@ module GraphQL
         @instrumented_field_map = traversal.instrumented_field_map
         @type_reference_map = traversal.type_reference_map
         @union_memberships = traversal.union_memberships
-        @subtypes = Hash.new { |h, k| h[k] = {} }
-        @types.each do |t|
-          @types.each do |t2|
-            @subtypes[t][t2] = GraphQL::Execution::Typecast.subtype?(t, t2)
+        @subtypes = {}
+        @types.each do |name, t|
+          inner_subtypes = @subtypes[t] = {}
+          @types.each do |name2, t2|
+            inner_subtypes[t2] = GraphQL::Execution::Typecast.subtype?(t, t2)
           end
         end
       end
