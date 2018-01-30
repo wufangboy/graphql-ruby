@@ -3,6 +3,7 @@ module GraphQL
   module Execution
     # @api private
     module Typecast
+      # @see {Schema#subtype?}, which caches the results of this method
       # @return [Boolean]
       def self.subtype?(parent_type, child_type)
         if parent_type == child_type

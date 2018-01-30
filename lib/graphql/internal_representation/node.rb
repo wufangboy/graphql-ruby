@@ -76,6 +76,7 @@ module GraphQL
         )
         @name = name
         @query = query
+        @schema = query.schema
         @owner_type = owner_type
         @parent = parent
         @typed_children = nil
@@ -192,7 +193,7 @@ module GraphQL
       def get_typed_children(obj_type)
         new_tc = {}
         @scoped_children.each do |scope_type, scope_nodes|
-          if GraphQL::Execution::Typecast.subtype?(scope_type, obj_type)
+          if @schema.subtype?(scope_type, obj_type)
             scope_nodes.each do |name, new_node|
               prev_node = new_tc[name]
               if prev_node

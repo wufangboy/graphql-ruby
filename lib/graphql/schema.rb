@@ -564,6 +564,10 @@ module GraphQL
       JSON.pretty_generate(as_json(*args))
     end
 
+    def subtype?(parent_type, child_type)
+      @subtypes[parent_type][child_type]
+    end
+
     protected
 
     def rescues?
@@ -593,10 +597,16 @@ module GraphQL
         @rebuilding_artifacts = true
         traversal = Traversal.new(self)
         @types = traversal.type_map
-        @root_types = [query, mutation, subscription]
+        @root_types = [query, mutation, subscription].compact
         @instrumented_field_map = traversal.instrumented_field_map
         @type_reference_map = traversal.type_reference_map
         @union_memberships = traversal.union_memberships
+        @subtypes = Hash.new { |h, k| h[k] = {} }
+        @types.each do |t|
+          @types.each do |t2|
+            @subtypes[t][t2] = GraphQL::Execution::Typecast.subtype?(t, t2)
+          end
+        end
       end
     ensure
       @rebuilding_artifacts = false
