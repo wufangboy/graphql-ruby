@@ -37,19 +37,49 @@ module GraphQLBenchmark
   end
 
   def self.profile
-    # Warm up any caches:
-    SCHEMA.execute(document: DOCUMENT)
-    # CARD_SCHEMA.validate(ABSTRACT_FRAGMENTS)
-
-    result = RubyProf.profile do
+    profile_block("profile") do
       # CARD_SCHEMA.validate(ABSTRACT_FRAGMENTS)
       SCHEMA.execute(document: DOCUMENT)
     end
+  end
+
+
+  def self.profile_validation
+    name = ENV["PROFILE_NAME"] || "big-query"
+    profile_block(name) do
+      BIG_SCHEMA.validate(BIG_QUERY)
+    end
+  end
+
+  def self.profile_block(name)
+    # Warm up any caches:
+    yield
+
+    result = RubyProf.profile do
+      yield
+    end
+
+    # Print a flat profile to text
+    File.open "#{name}-graph.html", 'w' do |file|
+      RubyProf::GraphHtmlPrinter.new(result).print(file)
+    end
+
+    File.open "#{name}-flat.txt", 'w' do |file|
+      # RubyProf::FlatPrinter.new(result).print(file)
+      RubyProf::FlatPrinterWithLineNumbers.new(result).print(file)
+    end
+
+    File.open "#{name}-stack.html", 'w' do |file|
+      RubyProf::CallStackPrinter.new(result).print(file)
+    end
 
     printer = RubyProf::FlatPrinter.new(result)
-    # printer = RubyProf::GraphHtmlPrinter.new(result)
+    html_printer = RubyProf::GraphHtmlPrinter.new(result)
+    File.open("#{name}-profile.html", "wb") { |f| html_printer.print(f, {}) }
     # printer = RubyProf::FlatPrinterWithLineNumbers.new(result)
 
     printer.print(STDOUT, {})
+
+    MemoryProfiler.report { yield }.pretty_print
   end
 end
