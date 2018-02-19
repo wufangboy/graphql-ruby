@@ -39,6 +39,38 @@ module GraphQL
         visit_node(@document, nil)
       end
 
+      protected
+      # AbstractNode
+      # Argument
+      # Directive
+      # DirectiveDefinition
+      # Document
+      # Enum
+      # EnumTypeDefinition
+      # EnumValueDefinition
+      # Field
+      # FieldDefinition
+      # FragmentDefinition
+      # FragmentSpread
+      # InlineFragment
+      # InputObject
+      # InputObjectTypeDefinition
+      # InputValueDefinition
+      # InterfaceTypeDefinition
+      # ListType
+      # NameOnlyNode
+      # NonNullType
+      # NullValue
+      # ObjectTypeDefinition
+      # OperationDefinition
+      # ScalarTypeDefinition
+      # SchemaDefinition
+      # TypeName
+      # UnionTypeDefinition
+      # VariableDefinition
+      # VariableIdentifier
+      # WrapperType
+
       private
 
       def visit_node(node, parent)

@@ -18,6 +18,12 @@ module GraphQL
         @rules = rules
       end
 
+      VISIT_METHODS = {
+        on_operation_definition: GraphQL::Language::Nodes::OperationDefinition,
+        on_fragment_definition: GraphQL::Language::Nodes::FragmentDefinition,
+        on_inline_fragment: GraphQL::Language::Nodes::InlineFragment,
+      }
+
       # Validate `query` against the schema. Returns an array of message hashes.
       # @param query [GraphQL::Query]
       # @return [Array<Hash>]
@@ -25,14 +31,25 @@ module GraphQL
         query.trace("validate", { validate: validate, query: query }) do
           context = GraphQL::StaticValidation::ValidationContext.new(query)
           rewrite = GraphQL::InternalRepresentation::Rewrite.new
+          visitor = context.visitor
 
           # Put this first so its enters and exits are always called
           rewrite.validate(context)
 
           # If the caller opted out of validation, don't attach these
           if validate
-            @rules.each do |rules|
-              rules.new.validate(context)
+            @rules.each do |rule_class|
+              if rule_class.method_defined?(:validate)
+                rule_class.new.validate(context)
+              else
+                rule = rule_class.new(context)
+                # TODO couldn't this be done ahead-of-time somehow
+                VISIT_METHODS.each do |method_name, node_class|
+                  if rule.respond_to?(method_name)
+                    visitor[node_class] << rule.method(method_name)
+                  end
+                end
+              end
             end
           end
 
